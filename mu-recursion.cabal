@@ -1,0 +1,24 @@
+cabal-version:      2.4
+name:               mu-recursion
+version:            0.1.0.0
+synopsis:
+homepage:
+license:            NONE
+author:             arne
+maintainer:         arnemileswinter@gmail.com
+category:           Math
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules:  MuRecursion
+    build-depends:    base ^>=4.13.0.0
+    hs-source-dirs:   lib
+    default-language: Haskell2010
+
+executable mu-recursion
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.13.0.0,
+        mu-recursion
+    hs-source-dirs:   src
+    default-language: Haskell2010
