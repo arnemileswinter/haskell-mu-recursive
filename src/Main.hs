@@ -5,18 +5,16 @@ import Prelude hiding (exp, null, pred, succ)
 
 main :: IO ()
 main = do
-  a <- read <$> getLine
-  b <- read <$> getLine
-  print $ runMu add [a, b]
+  runMuIO add [2, 3]
 
-add, mult, exp, isNull :: Mu
+add, mult, exp :: Mu
 -- bekannt aus VL
 -- add :: Int -> Int -> Int
 -- add a b = a + b
 add = pr (proj 1 1, succ <@> [proj 3 1])
 
 -- bekannt aus VL
--- mult :: Int -> Int -> Int 
+-- mult :: Int -> Int -> Int
 -- mult a b = a*b
 mult = pr (null 1, add <@> [proj 3 1, proj 3 2])
 
