@@ -4,73 +4,131 @@ module MuRecursion
   , succ
   , (<@>)
   , pr
-  , runMu
   , Mu
-  , argCount
+  , runMu
+  , runMuIO
+  , µ
   ) where
 
-import Data.Either (partitionEithers)
+import qualified Control.Arrow as Data.Bifunctor
+import Data.Either (either, partitionEithers)
 import Data.List (intercalate)
 import Prelude hiding (null, succ)
 import qualified Prelude as P
 
-type ArgC = Int
+newtype Mu =
+  Mu
+    { unMu :: Log -> [Int] -> Either String (Log, Int)
+    }
 
-data Mu
-  = Proj ArgC Int
-  | Null ArgC
-  | Succ
-  | Compose Mu [Mu]
-  | PR Mu Mu
-  deriving (Eq)
+newtype Log =
+  Log [String]
 
-proj = Proj
+newLog :: Log
+newLog = Log []
 
-null = Null
+addLog :: Log -> String -> Log
+addLog l@(Log s) s'
+  | P.null s' = l
+  | otherwise = Log $ s ++ [s']
 
-succ = Succ
+joinLog :: Log -> Log -> Log
+joinLog l (Log s') = foldl addLog l s'
 
-a <@> b = Compose a b
+indentLog :: Log -> Char -> Log
+indentLog (Log s) c = Log $ map ((c : " ") ++) s
 
-pr (a, b) = PR a b
+instance Show Log where
+  show (Log s) = unlines $ filter (not . P.null) s
 
-k, argCount :: Mu -> Int
-argCount = k
+runMu :: Mu -> [Int] -> Either String (String, Int)
+runMu m args = Data.Bifunctor.first show <$> unMu m newLog args
 
-k (Proj k' _) = k'
-k (Null k') = k'
-k Succ = 1
-k (Compose g hs) = foldl max 0 (map k hs) -- hs should all have the same k.
-k (PR g h) = k g + 1
+runMuIO :: Mu -> [Int] -> IO ()
+runMuIO m args =
+  either
+    putStrLn
+    (\(a, b) ->
+       putStr a >> putStrLn (replicate 5 '-') >>
+       putStrLn ("Result is " ++ show b))
+    (runMu m args)
+
+proj :: Int -> Int -> Mu
+proj k i =
+  Mu $ \log args ->
+    if length args /= k
+      then Left $
+           "Argument count mismatch! Proj received " ++
+           show (length args) ++ " arguments, but expected " ++ show k
+      else Right
+             ( addLog log $
+               "proj_{" ++ show k ++ " -> " ++ show i ++ "}" ++ fmtArgs args
+             , (0 : args) !! i)
+
+null :: Int -> Mu
+null k =
+  Mu $ \log args ->
+    if length args /= k
+      then Left $
+           "Argument count mismatch! Null received " ++
+           show (length args) ++ " arguments, but expected " ++ show k
+      else Right (addLog log $ "null_" ++ show k ++ fmtArgs args, 0)
+
+succ :: Mu
+succ =
+  Mu $ \log args ->
+    if length args /= 1
+      then Left $
+           "Argument count mismatch! Succ received " ++
+           show (length args) ++ " arguments, but expected 1"
+      else Right (addLog log $ "succ" ++ fmtArgs args, head args + 1)
+
+compose, (<@>) :: Mu -> [Mu] -> Mu
+compose g hs =
+  Mu $ \log args ->
+    let (errs, unMus) =
+          partitionEithers $
+          map
+            (\m ->
+               (\(l, r) -> (addLog l $ "=" ++ show r, r)) <$> unMu m newLog args)
+            hs
+        log' = foldl joinLog newLog $ map fst unMus
+        results = map snd unMus
+     in if P.null errs
+          then unMu
+                 g
+                 (joinLog
+                    (addLog log $ "compose" ++ fmtArgs args)
+                    (indentLog log' '#'))
+                 results
+          else Left $ unlines errs
+
+a <@> b = compose a b
+
+pr :: (Mu, Mu) -> Mu
+pr (g, h) = Mu f
+  where
+    nestL = \(l, r) -> (addLog l $ "=" ++ show r, r)
+    f log args
+      | last args == 0 = nestL <$> unMu g log (init args)
+      | otherwise = do
+        (log', f') <- f newLog (init args ++ [last args - 1])
+        (\(l, r) -> (addLog l $ "=" ++ show r, r)) <$>
+          unMu
+            h
+            (joinLog (addLog log $ "pr" ++ fmtArgs args) $ indentLog log' '|')
+            (f' : init args ++ [last args - 1])
+
+µ :: Mu -> Mu
+µ g = Mu $ findMin 0
+  where
+    findMin :: Int -> Log -> [Int] -> Either String (Log, Int)
+    findMin acc log args = do
+      (log', r) <-
+        unMu g (addLog log $ "µ" ++ fmtArgs (args ++ [acc])) (args ++ [acc])
+      if r /= 0
+        then findMin (acc + 1) log' args
+        else pure (log', acc)
 
 fmtArgs :: [Int] -> String
 fmtArgs args = "(" ++ intercalate ", " (map show args) ++ ")"
-
-runMu :: Mu -> [Int] -> Either String Int
-runMu mu args
-  | any (< 0) args = Left $ "Received negative number in args " ++ show args
-  | length args /= k mu =
-    Left $
-    "Argument count mismatch! Expected " ++
-    show (k mu) ++ " but received " ++ show (length args)
-  | otherwise = go mu
-  where
-    go :: Mu -> Either String Int
-    -- primitive definitions
-    go (Null _) = pure 0
-    go (Proj _ i) = pure $ (0 : args) !! i -- prefix args with 0 such that index starts at 1. 
-                                               -- Safe indexing because k implies argument count.
-    go Succ = pure $ head args + 1 -- Safe head because k implies argument count.
-    -- composition
-    go (Compose g hs) =
-      let (lefts, rights) = partitionEithers $ map (`runMu` args) hs
-       in if P.null lefts
-            then runMu g rights
-            else Left $ unlines lefts
-    -- primitive recursion
-    go (PR g h)
-      | last args == 0 = runMu g (init args)
-      | otherwise = do
-        let m' = last args - 1
-        r <- runMu mu (init args ++ [m'])
-        runMu h (r : init args ++ [m'])
