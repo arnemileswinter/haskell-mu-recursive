@@ -106,3 +106,35 @@ runMu :: Mu -> [Int] -> Either String (String,Int)
 It does the same as `runMuIO`, without printing to your terminal.
 If it returns Left, then an error has occured running your mu-recursive function. 
 If it returns Right, the first element of the tuple is the string-log of calculation steps and the second element is the numerical result of the function evaluation.
+
+## Tinkering with µ-recursion
+
+To immediately start tinkering with this project, your best bet would be to first clone the github repository and then enter the interactive shell with `stack repl`, which will load `src/Main.hs` into your interactive shell.
+
+Heres an example of evaluation the `add` function with parameters 2 and 3 in `ghci`:
+
+```
+*Main MuRecursion> runMuIO (add) [2,3]
+pr(2, 3)
+| pr(2, 2)
+| | pr(2, 1)
+| | | proj_{1 -> 1}(2)
+| | | =2
+| | compose(2, 2, 0)
+| | # proj_{3 -> 1}(2, 2, 0)
+| | # =2
+| | succ(2)
+| | =3
+| compose(3, 2, 1)
+| # proj_{3 -> 1}(3, 2, 1)
+| # =3
+| succ(3)
+| =4
+compose(4, 2, 2)
+# proj_{3 -> 1}(4, 2, 2)
+# =4
+succ(4)
+=5
+-----
+Result is 5
+```
