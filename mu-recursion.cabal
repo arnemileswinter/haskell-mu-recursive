@@ -3,7 +3,7 @@ name:               mu-recursion
 version:            0.1.0.0
 synopsis:
 homepage:
-license:            NONE
+license:            MIT
 author:             arne
 maintainer:         arnemileswinter@gmail.com
 category:           Math
