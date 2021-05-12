@@ -23,8 +23,7 @@ The successor function takes exactly one argument and always yields the successo
 succ :: Mu
 ```
 
-formally:
-[succ](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D%20%5Cbegin%7Balign*%7Dsucc:%20%5Cmathbb%7BN%7D%20&%5Cto%20%5Cmathbb%7BN%7D%20%5C%5C%20%20%20%20%20%20n%20&%5Cmapsto%20n&plus;1%5Cend%7Balign*%7D)
+![succ](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D%20%5Cbegin%7Balign*%7Dsucc:%20%5Cmathbb%7BN%7D%20&%5Cto%20%5Cmathbb%7BN%7D%20%5C%5C%20%20%20%20%20%20n%20&%5Cmapsto%20n&plus;1%5Cend%7Balign*%7D)
 
 ##### Projection
 
@@ -36,9 +35,7 @@ proj :: Int -> Int -> Mu
 
 Intuitively it is a selection operator, where the first argument (k) specifies what size of tuple it receives and the second argument (i) specifying which element of the tuple to select. 
 
-formally:
-
-[equation](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D%20%5Cbegin%7Balign*%7Dproj_%7Bk%20%5Crightarrow%20i%7D:%20%5Cmathbb%7BN%7D%5Ek%20&%5Cto%20%5Cmathbb%7BN%7D%20%5C%5C%20(n_1,n_2,...,n_i,...,n_k)%20&%5Cmapsto%20%20n_i%5Cend%7Balign*%7D)
+![proj](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D%20%5Cbegin%7Balign*%7Dproj_%7Bk%20%5Crightarrow%20i%7D:%20%5Cmathbb%7BN%7D%5Ek%20&%5Cto%20%5Cmathbb%7BN%7D%20%5C%5C%20(n_1,n_2,...,n_i,...,n_k)%20&%5Cmapsto%20%20n_i%5Cend%7Balign*%7D)
 
 
 ##### Composition
